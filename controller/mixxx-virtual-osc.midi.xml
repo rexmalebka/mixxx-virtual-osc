@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MixxxControllerPreset mixxxVersion="" schemaVersion="1">
+    <info>
+        <name>mixxx-virtual-osc</name>
+        <author>rexmalebka</author>
+    </info>
+
+
+    <controller id="mixxx-virtual-osc">
+        <scriptfiles>
+            <file filename="mixxx-virtual-osc.js" functionprefix="VirtualOSC" />
+        </scriptfiles>
+    </controller>
+
+</MixxxControllerPreset>
