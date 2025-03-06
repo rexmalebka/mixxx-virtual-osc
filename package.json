@@ -1,8 +1,8 @@
 {
-  "name": "mixxx-virtual-osc",
+  "name": "mixxx-websockets",
   "version": "1.0.0",
-  "description": "| Mixxx event        | Midi | OSC Address    | OSC Args               | | ------------------ | ---- | -------------- | ---------------------- | | [ChannelN] play    |      | /channelN/play | 0 for pause, 127 play  | | [ChannelN] reverse |      | /channelN/rev  | 0 for forward, 127 rev | | [ChannelN] mute    |      | /channelN/mute | 0 for unmute, 127 mute | | [ChannelN] low     |      | /channelN/low  | 0 - 127                |",
-  "main": "mixxx-virtual-osc.js",
+  "description": "",
+  "main": "mixxx-websockets.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "midi": "^2.0.0"
+    "midi": "^2.0.0",
+    "winston": "^3.17.0",
+    "ws": "^8.18.1"
   }
 }

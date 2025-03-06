@@ -4,12 +4,21 @@
         <name>mixxx-virtual-osc</name>
         <author>rexmalebka</author>
     </info>
-
-
     <controller id="mixxx-virtual-osc">
         <scriptfiles>
             <file filename="mixxx-virtual-osc.js" functionprefix="VirtualOSC" />
         </scriptfiles>
+        <controls>
+            <control>
+                <group>[Master]</group>
+                <key>VirtualOSC.Master</key>
+                <status>0xF0</status>
+                <options>
+                    <Script-binding />
+                </options>
+            </control>
+        </controls>
+
     </controller>
 
 </MixxxControllerPreset>

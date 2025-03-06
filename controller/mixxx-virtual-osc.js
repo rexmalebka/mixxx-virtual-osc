@@ -70,7 +70,6 @@ function sendChannel(channel, index, value, scale = 100) {
 
 function onEQChange(value, band, channel) {
   // console.log(`Channel ${channel} ${band} EQ changed to:`, value);
-
   // Example: Send the new EQ value via MIDI
   //  sendChannel(channel, band === "low" ? 6 : band === "mid" ? 7 : 8, value);
 }
@@ -156,32 +155,283 @@ const ChannelControls = {
 };
 
 VirtualOSC.init = (id, debugging) => {
-  for (const control in MasterControls) {
-    engine.makeConnection("[Master]", control, MasterControls[control]);
+  // for (const control in MasterControls) {
+  //   engine.makeConnection("[Master]", control, MasterControls[control]);
+  // }
+  // for (let deck = 1; deck <= 4; deck++) {
+  //   Object.entries(ChannelControls).forEach(([control, handler]) => {
+  //     engine.makeConnection(`[Channel${deck}]`, control, (value) =>
+  //       handler(deck, value)
+  //     );
+  //   });
+  //   engine.makeConnection(
+  //     `[EqualizerRack1_[Channel${deck}]_Effect1]`,
+  //     "parameter1",
+  //     (value) => onEQChange(value, "low", deck)
+  //   );
+  //   engine.makeConnection(
+  //     `[EqualizerRack1_[Channel${deck}]_Effect1]`,
+  //     "parameter2",
+  //     (value) => onEQChange(value, "mid", deck)
+  //   );
+  //   engine.makeConnection(
+  //     `[EqualizerRack1_[Channel${deck}]_Effect1]`,
+  //     "parameter3",
+  //     (value) => onEQChange(value, "high", deck)
+  //   );
+  // }
+};
+
+VirtualOSC.init = (id, debugging) => {};
+
+VirtualOSC.Master = function (key, params) {
+  const PREFIX = [0xf0, 0x1];
+
+  let msg = [...PREFIX];
+
+  switch (key) {
+    case 0:
+      if (params.length == 0) {
+        const gain = engine.getValue("[Master]", "gain");
+        msg.push(0x00, ...encodeFloatToMidiBytes(gain), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const gain = decodeMidiBytesToFloat(params);
+        engine.setValue("[Master]", "gain", gain);
+      }
+
+      break;
+    case 1:
+      if (params.length == 0) {
+        const pan = engine.getValue("[Master]", "balance");
+        msg.push(0x01, ...encodeFloatToMidiBytes(pan), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const pan = decodeMidiBytesToFloat(params);
+        engine.setValue("[Master]", "balance", pan);
+      }
+
+      break;
+    case 2:
+      if (params.length == 0) {
+        const crossfader = engine.getValue("[Master]", "crossfader");
+        msg.push(0x01, ...encodeFloatToMidiBytes(crossfader), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const crossfader = decodeMidiBytesToFloat(params);
+        engine.setValue("[Master]", "crossfader", crossfader);
+      }
+      break;
   }
+};
 
-  for (let deck = 1; deck <= 4; deck++) {
-    Object.entries(ChannelControls).forEach(([control, handler]) => {
-      engine.makeConnection(`[Channel${deck}]`, control, (value) =>
-        handler(deck, value)
-      );
-    });
+VirtualOSC.Channel = function (deck, key, params) {
+  const PREFIX = [0xf0, 0x2];
+  let msg = [...PREFIX];
 
-    engine.makeConnection(
-      `[EqualizerRack1_[Channel${deck}]_Effect1]`,
-      "parameter1",
-      (value) => onEQChange(value, "low", deck)
-    );
-    engine.makeConnection(
-      `[EqualizerRack1_[Channel${deck}]_Effect1]`,
-      "parameter2",
-      (value) => onEQChange(value, "mid", deck)
-    );
-    engine.makeConnection(
-      `[EqualizerRack1_[Channel${deck}]_Effect1]`,
-      "parameter3",
-      (value) => onEQChange(value, "high", deck)
-    );
+  switch (key) {
+    case 0:
+      if (params.length == 0) {
+        const bpm = engine.getValue(`[Channel${deck}]`, "bpm");
+        msg.push(deck, key, ...encodeFloatToMidiBytes(bpm), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const bpm = decodeMidiBytesToFloat(params);
+        engine.setValue(`[Channel${deck}]`, "bpm", bpm);
+      }
+
+      break;
+    case 1:
+      if (params.length == 0) {
+        const volume = engine.getValue(`[Channel${deck}]`, "volume");
+
+        msg.push(deck, key, ...encodeFloatToMidiBytes(volume), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const volume = decodeMidiBytesToFloat(params);
+        engine.setValue(`[Channel${deck}]`, "volume", volume);
+      }
+
+      break;
+    case 2:
+      if (params.length == 0) {
+        const pitch = engine.getValue(`[Channel${deck}]`, "pitch");
+        msg.push(deck, key, ...encodeFloatToMidiBytes(pitch), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const pitch = decodeMidiBytesToFloat(params);
+        engine.setValue(`[Channel${deck}]`, "pitch", pitch);
+      }
+
+      break;
+    case 3:
+      if (params.length == 0) {
+        const rate = engine.getValue(`[Channel${deck}]`, "rate");
+        msg.push(deck, key, ...encodeFloatToMidiBytes(rate), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const rate = decodeMidiBytesToFloat(params);
+        engine.setValue(`[Channel${deck}]`, "rate", rate);
+      }
+
+      break;
+    case 4:
+      if (params.length == 0) {
+        const reverse = engine.getValue(`[Channel${deck}]`, "reverse");
+
+        msg.push(deck, key, reverse, 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const reverse = params[0];
+        engine.setValue(`[Channel${deck}]`, "reverse", reverse);
+      }
+
+      break;
+    case 5:
+      if (params.length == 0) {
+        const beat_active = engine.getValue(`[Channel${deck}]`, "beat_active");
+        msg.push(deck, key, beat_active, 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      }
+
+      break;
+    case 6:
+      if (params.length == 0) {
+        const playing = engine.getValue(`[Channel${deck}]`, "play");
+        msg.push(deck, key, playing, 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const playing = params[0];
+        engine.setValue(`[Channel${deck}]`, "play", playing);
+      }
+      break;
+    case 7:
+      if (params.length == 0) {
+        const loop_enabled = engine.getValue(
+          `[Channel${deck}]`,
+          "loop_enabled"
+        );
+        msg.push(deck, key, loop_enabled, 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const loop_enabled = params[0];
+        engine.setValue(`[Channel${deck}]`, "loop_enabled", loop_enabled);
+      }
+      break;
+    case 8:
+      if (params.length == 0) {
+        const loop_start_position = engine.getValue(
+          `[Channel${deck}]`,
+          "loop_start_position"
+        );
+        msg.push(
+          deck,
+          key,
+          ...encodeFloatToMidiBytes(loop_start_position),
+          0xf7
+        );
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const loop_start_position = decodeMidiBytesToFloat(params);
+        engine.setValue(
+          `[Channel${deck}]`,
+          "loop_start_position",
+          loop_start_position
+        );
+      }
+      break;
+    case 9:
+      if (params.length == 0) {
+        const loop_end_position = engine.getValue(
+          `[Channel${deck}]`,
+          "loop_end_position"
+        );
+        msg.push(deck, key, ...encodeFloatToMidiBytes(loop_end_position), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const loop_end_position = decodeMidiBytesToFloat(params);
+        engine.setValue(
+          `[Channel${deck}]`,
+          "loop_end_position",
+          loop_start_position
+        );
+      }
+      break;
+    case 10:
+      if (params.length == 0) {
+        const play_position = engine.getValue(
+          `[Channel${deck}]`,
+          "playposition"
+        );
+        msg.push(deck, key, ...encodeFloatToMidiBytes(play_position), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      } else {
+        const play_position = decodeMidiBytesToFloat(params);
+        engine.setValue(`[Channel${deck}]`, "play_position", play_position);
+      }
+      break;
+    case 11:
+      if (params.length == 0) {
+        const track_loaded = engine.getValue(
+          `[Channel${deck}]`,
+          "track_loaded"
+        );
+        msg.push(deck, key, ...encodeFloatToMidiBytes(track_loaded), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      }
+      break;
+    case 12:
+      if (params.length == 0) {
+        const track_samplerate = engine.getValue(
+          `[Channel${deck}]`,
+          "track_samplerate"
+        );
+        msg.push(deck, key, ...encodeFloatToMidiBytes(track_samplerate), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      }
+      break;
+    case 13:
+      if (params.length == 0) {
+        const track_samples = engine.getValue(
+          `[Channel${deck}]`,
+          "track_samples"
+        );
+        msg.push(deck, key, ...encodeFloatToMidiBytes(track_samples), 0xf7);
+
+        midi.sendSysexMsg(msg, msg.length);
+      }
+      break;
+  }
+};
+
+VirtualOSC.incomingData = (message) => {
+  const [context, ...data] = message.slice(1, -1);
+
+  switch (context) {
+    case 1:
+      const [MasterKey, ...MasterParams] = data;
+      VirtualOSC.Master(MasterKey, MasterParams);
+      break;
+    case 2:
+      const [ChannelNumber, ChannelKey, ...ChannelParams] = data;
+      VirtualOSC.Channel(ChannelNumber, ChannelKey, ChannelParams);
+      break;
   }
 };
 
